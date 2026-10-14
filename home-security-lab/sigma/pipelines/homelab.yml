@@ -1,0 +1,48 @@
+# pySigma processing pipeline: maps the field names used in sigma/rules/
+# onto the ECS fields written by homelab/parsers.py, and limits each rule
+# to the right dataset in the lab-logs index.
+name: Home lab ECS mapping
+priority: 30
+transformations:
+  # Web server rules use the standard Sigma "webserver" field names.
+  - id: webserver_fields
+    type: field_name_mapping
+    mapping:
+      c-ip: source.ip
+      cs-method: http.request.method
+      cs-uri-query: url.original
+      cs-user-agent: user_agent.original
+      sc-status: http.response.status_code
+    rule_conditions:
+      - type: logsource
+        category: webserver
+  - id: webserver_dataset
+    type: add_condition
+    conditions:
+      event.dataset: nginx.access
+    rule_conditions:
+      - type: logsource
+        category: webserver
+
+  # Linux auth rules use field names produced by the lab's own parser.
+  - id: linux_auth_fields
+    type: field_name_mapping
+    mapping:
+      EventAction: event.action
+      Outcome: event.outcome
+      User: user.name
+      TargetUser: user.target.name
+      SourceIp: source.ip
+      CommandLine: process.command_line
+    rule_conditions:
+      - type: logsource
+        product: linux
+        service: auth
+  - id: linux_auth_dataset
+    type: add_condition
+    conditions:
+      event.dataset: linux.auth
+    rule_conditions:
+      - type: logsource
+        product: linux
+        service: auth

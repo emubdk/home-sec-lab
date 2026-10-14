@@ -1,0 +1,29 @@
+title: Root Shell Started Via Sudo
+id: 3f1c2a8e-5b8d-4c1e-9b1a-6a2f0d7e1c03
+status: experimental
+description: |
+  A user ran a shell as root through sudo. Legitimate admins do this, but
+  after a suspicious login it is a strong sign of privilege escalation.
+author: emubdk
+date: 2026-10-14
+tags:
+  - attack.privilege-escalation
+  - attack.t1548.003
+logsource:
+  product: linux
+  service: auth
+detection:
+  selection:
+    EventAction: sudo
+    TargetUser: root
+    CommandLine|startswith:
+      - '/bin/bash'
+      - '/usr/bin/bash'
+      - '/bin/sh'
+      - '/usr/bin/sh'
+      - '/bin/dash'
+      - '/usr/bin/dash'
+  condition: selection
+falsepositives:
+  - Administrators using sudo -s or sudo bash
+level: medium

@@ -1,0 +1,22 @@
+title: New Local User Account Created
+id: 3f1c2a8e-5b8d-4c1e-9b1a-6a2f0d7e1c02
+status: experimental
+description: |
+  useradd created a new local account. On a server that is not managed by
+  configuration management this is rare and a common persistence step.
+author: emubdk
+date: 2026-10-14
+tags:
+  - attack.persistence
+  - attack.t1136.001
+logsource:
+  product: linux
+  service: auth
+detection:
+  selection:
+    EventAction: user_created
+  condition: selection
+falsepositives:
+  - Administrators adding accounts by hand
+  - Package installs that create service users
+level: medium

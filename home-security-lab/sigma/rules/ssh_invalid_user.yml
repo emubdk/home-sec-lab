@@ -1,0 +1,22 @@
+title: SSH Login Attempt For Non-Existent User
+id: 3f1c2a8e-5b8d-4c1e-9b1a-6a2f0d7e1c01
+status: experimental
+description: |
+  sshd reports a login attempt for a user that does not exist on the host.
+  A few of these are noise; many from one source IP usually mean password
+  spraying or a brute-force wordlist (admin, test, oracle, ...).
+author: emubdk
+date: 2026-10-14
+tags:
+  - attack.credential-access
+  - attack.t1110.001
+logsource:
+  product: linux
+  service: auth
+detection:
+  selection:
+    EventAction: ssh_invalid_user
+  condition: selection
+falsepositives:
+  - Users mistyping their user name
+level: low

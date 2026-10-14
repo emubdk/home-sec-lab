@@ -1,0 +1,90 @@
+name: home-security-lab
+
+# Everything except Kibana/Elasticsearch ports stays on an internal network.
+# Published ports are bound to 127.0.0.1 so nothing is reachable from your LAN.
+
+services:
+  elasticsearch:
+    image: elasticsearch:8.15.3
+    environment:
+      - discovery.type=single-node
+      # Security is off to keep the lab simple. Fine on localhost, not for anything shared.
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      retries: 30
+    networks: [lab]
+
+  kibana:
+    image: kibana:8.15.3
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "127.0.0.1:5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks: [lab]
+
+  victim:
+    build: lab/victim
+    hostname: victim
+    volumes:
+      - victim-logs:/var/log
+    networks: [lab]
+
+  shipper:
+    build: .
+    command: python -m homelab.shipper
+    environment:
+      - ES_URL=http://elasticsearch:9200
+      - LOG_DIR=/logs
+    volumes:
+      - victim-logs:/logs:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks: [lab]
+
+  detector:
+    build: .
+    command: sh -c "python -m homelab.sigma_convert --out /tmp/detections.json && python -m homelab.detector"
+    environment:
+      - ES_URL=http://elasticsearch:9200
+      - DETECTIONS=/tmp/detections.json
+      - POLL_SECONDS=30
+    volumes:
+      # Mounted so edited rules are picked up with `docker compose restart detector`.
+      - ./sigma:/app/sigma:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks: [lab]
+
+  attacker:
+    build: lab/attacker
+    profiles: [attack]
+    networks: [lab]
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: [llm]
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    networks: [lab]
+
+volumes:
+  es-data:
+  victim-logs:
+  ollama:
+
+networks:
+  lab:

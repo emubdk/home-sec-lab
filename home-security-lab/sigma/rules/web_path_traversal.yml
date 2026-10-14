@@ -1,0 +1,25 @@
+title: Path Traversal Attempt In Web Request
+id: 3f1c2a8e-5b8d-4c1e-9b1a-6a2f0d7e1c05
+status: experimental
+description: |
+  The requested URL contains "../" or an encoded variant, which is used to
+  escape the web root and read files such as /etc/passwd.
+author: emubdk
+date: 2026-10-14
+tags:
+  - attack.initial-access
+  - attack.t1190
+logsource:
+  category: webserver
+detection:
+  selection:
+    cs-uri-query|contains:
+      - '../'
+      - '..%2f'
+      - '%2e%2e'
+      - '..\'
+      - '/etc/passwd'
+  condition: selection
+falsepositives:
+  - Badly written client applications
+level: medium

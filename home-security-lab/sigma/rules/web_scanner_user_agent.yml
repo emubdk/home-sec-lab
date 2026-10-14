@@ -1,0 +1,27 @@
+title: Web Request With Known Scanner User-Agent
+id: 3f1c2a8e-5b8d-4c1e-9b1a-6a2f0d7e1c04
+status: experimental
+description: |
+  The User-Agent header names a well-known scanning or exploitation tool.
+  Real attackers often change it, so missing this alert proves nothing,
+  but default-configured tools are caught cheaply.
+author: emubdk
+date: 2026-10-14
+tags:
+  - attack.reconnaissance
+  - attack.t1595.002
+logsource:
+  category: webserver
+detection:
+  selection:
+    cs-user-agent|contains:
+      - 'nmap'
+      - 'nikto'
+      - 'sqlmap'
+      - 'gobuster'
+      - 'nuclei'
+      - 'masscan'
+  condition: selection
+falsepositives:
+  - Authorised vulnerability scans
+level: low
